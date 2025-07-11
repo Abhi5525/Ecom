@@ -1,0 +1,175 @@
+checkout:
+@csrf_exempt
+def checkout(request):
+    if request.method == 'POST':
+        import uuid, json
+        from .models import Order
+
+        items = json.loads(request.POST.get('items'))
+        name = request.POST.get('inputName', '')
+        email = request.POST.get('inputEmail', '')
+        address = request.POST.get('inputAddress', '')
+        state = request.POST.get('inputState', '')
+        total = float(request.POST.get('total'))
+
+        transaction_uuid = str(uuid.uuid4())
+        tax = 0.0
+        total_amount = f"{total + tax:.2f}"
+
+        # Save Order
+        Order.objects.create(
+            items=items,
+            name=name,
+            email=email,
+            address=address,
+            state=state,
+            total=total + tax,
+            transaction_uuid=transaction_uuid,
+            has_paid=False
+        )
+
+        # Signature logic
+        signed_field_names = "total_amount,transaction_uuid,product_code"
+        data_to_sign = {
+            "total_amount": total_amount,
+            "transaction_uuid": transaction_uuid,
+            "product_code": "EPAYTEST",
+            "signed_field_names": signed_field_names
+        }
+        signature = generate_signature(data_to_sign)
+
+        return render(request, "shop/esewa.html", {
+            'amount': f"{total:.2f}",
+            'tax_amount': f"{tax:.2f}",
+            'total_amount': total_amount,
+            'transaction_uuid': transaction_uuid,
+            'product_code': 'EPAYTEST',
+            'product_service_charge': '0',
+            'product_delivery_charge': '0',
+            'success_url': 'http://localhost:8000/payment/success/',
+            'failure_url': 'http://localhost:8000/payment/failure/',
+            'signed_field_names': signed_field_names,
+            'signature': signature
+        })
+
+    return render(request, "shop/checkout.html")
+
+esewahtml:
+<form id="esewaForm" action="https://rc-epay.esewa.com.np/api/epay/main/v2/form" method="POST">
+    <input type="hidden" name="amount" value="{{ amount }}">
+    <input type="hidden" name="tax_amount" value="{{ tax_amount }}">
+    <input type="hidden" name="total_amount" value="{{ total_amount }}">
+    <input type="hidden" name="transaction_uuid" value="{{ transaction_uuid }}">
+    <input type="hidden" name="product_code" value="{{ product_code }}">
+    <input type="hidden" name="product_service_charge" value="{{ product_service_charge }}">
+    <input type="hidden" name="product_delivery_charge" value="{{ product_delivery_charge }}">
+    <input type="hidden" name="success_url" value="{{ success_url }}">
+    <input type="hidden" name="failure_url" value="{{ failure_url }}">
+    <input type="hidden" name="signed_field_names" value="{{ signed_field_names }}">
+    <input type="hidden" name="signature" value="{{ signature }}">
+</form>
+<script>
+    document.getElementById('esewaForm').submit();
+</script>
+
+signature generator:
+import hmac, hashlib, base64
+from django.conf import settings
+
+
+def generate_signature(data_dict):
+    signed_fields = data_dict['signed_field_names'].split(',')
+
+    # STEP 2: Create the string in the correct format
+    message = ','.join([f"{field}={data_dict[field]}" for field in signed_fields])
+    secret_key = settings.ESEWA_SECRET_KEY
+    # STEP 3: Generate HMAC-SHA256
+    hmac_sha256 = hmac.new(secret_key.encode('utf-8'), message.encode('utf-8'), hashlib.sha256)
+
+    # STEP 4: Base64 encode the hash
+    signature = base64.b64encode(hmac_sha256.digest()).decode('utf-8')
+
+    return signature
+
+
+payment success:
+import requests
+import xmltodict
+import json
+import base64
+from django.shortcuts import render
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib import messages
+from .models import Order
+
+@csrf_exempt
+def payment_success(request):
+    if request.method != 'GET':
+        return render(request, 'shop/payment_failed.html', {'error': 'Invalid request method'})
+
+    encoded_data = request.GET.get('data')
+    if not encoded_data:
+        return render(request, 'shop/payment_failed.html', {'error': 'No payment data received'})
+
+    try:
+        # Decode base64-encoded JSON
+        payment_data = json.loads(base64.b64decode(encoded_data).decode('utf-8'))
+        transaction_id = payment_data.get('transaction_uuid')
+        total_amount = payment_data.get('total_amount')
+        status = payment_data.get('status')
+        reference_id = payment_data.get('transaction_code', '0')  # Default to '0' if missing
+
+        if status != 'COMPLETE':
+            return render(request, 'shop/payment_failed.html', {'error': 'Payment not complete'})
+
+        # Verify transaction if reference_id is valid
+        if reference_id and reference_id != '0':
+            try:
+                url = "https://uat.esewa.com.np/epay/transrec"
+                data = {
+                    'amt': total_amount,
+                    'scd': 'EPAYTEST',
+                    'rid': reference_id,
+                    'pid': transaction_id,
+                }
+                resp = requests.post(url, data, timeout=10)
+                if resp.status_code == 200 and xmltodict.parse(resp.content).get("response", {}).get("code") == "Success":
+                    order = Order.objects.get(transaction_uuid=transaction_id)
+                    order.has_paid = True
+                    order.save()
+                    messages.info(request, 'Payment successful!')
+                    return render(request, 'shop/payment_success.html', {'order': order, 'amount': total_amount})
+                else:
+                    return render(request, 'shop/payment_failed.html', {'error': 'Transaction verification failed'})
+            except requests.exceptions.RequestException:
+                pass  # Proceed to fallback if network fails
+
+        # Fallback: Process payment without verification if reference_id is 0 or network fails
+        order = Order.objects.get(transaction_uuid=transaction_id)
+        order.has_paid = True
+        order.save()
+        messages.warning(request, 'Payment processed without verification (reference ID issue or network failure).')
+        return render(request, 'shop/payment_success.html', {'order': order, 'amount': total_amount, 'warning': 'Payment pending manual confirmation'})
+
+    except Order.DoesNotExist:
+        return render(request, 'shop/payment_failed.html', {'error': 'Order not found'})
+    except Exception:
+        return render(request, 'shop/payment_failed.html', {'error': 'Invalid payment data'})
+
+
+failed view:
+@csrf_exempt
+def payment_failure(request):
+    return render(request, 'shop/payment_failed.html', {'error': 'Payment failed or cancelled'})
+
+
+success html and failed html:
+
+
+<h1>Payment Failed</h1>
+<p>{{ error }}</p>
+<a href="{% url 'checkout' %}">Try Again</a>
+
+<h1>Payment Successful!</h1>
+<p>Transaction ID: {{ order.transaction_uuid }}</p>
+<p>Paid: NPR {{ amount }}</p>

@@ -1,0 +1,133 @@
+{% extends "shop/base.html" %}
+{% load static %}
+
+{% block body %}
+<!-- Hero Section -->
+<div class="hero-section">
+    <div class="container">
+        <div class="hero-content">
+            <h1 class="hero-title">Discover Amazing Products</h1>
+            <p class="hero-subtitle">Shop the latest trends with exclusive deals and discounts</p>
+            <a href="/products" class="btn btn-light btn-lg px-5 py-3 rounded-pill font-weight-bold">Shop Now</a>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Search Section -->
+    <div class="search-card">
+        <div class="card-body row no-gutters align-items-center py-2">
+            <div class="col">
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text bg-white border-0"><i class="fas fa-search text-muted"></i></span>
+                    </div>
+                    <input type="search" name="item_name" placeholder="Search for products..."
+                        class="form-control form-control-lg border-0 search-input">
+                </div>
+            </div>
+            <div class="col-auto">
+                <button class="btn search-btn btn-lg px-4 py-3" type="submit">Search</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Featured Products -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Featured Products</h2>
+        <a href="/products" class="btn btn-link text-primary">View All <i class="fas fa-arrow-right ml-2"></i></a>
+    </div>
+
+    <!-- Products Section -->
+    <div class="row">
+        {% for product in items %}
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <div class="product-card" id="product-{{ product.id }}">
+                <div class="product-img-container">
+                    <img src="{{ product.image }}" class="product-img" alt="{{ product.title }}">
+                </div>
+                <div class="product-body">
+                    <h5 class="product-title">{{ product.title }}</h5>
+                    <div class="product-price">Rs {{ product.discount_price|default:product.price }}</div>
+                    <div class="d-flex justify-content-between">
+                        <a href="/product/{{ product.id }}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-eye mr-1"></i> Details
+                        </a>
+                        <button class="btn btn-add-to-cart btn-sm" 
+                                data-id="{{ product.id }}" 
+                                data-name="{{ product.title }}" 
+                                data-price="{{ product.discount_price|default:product.price }}">
+                            <i class="fas fa-shopping-cart mr-1"></i> Add
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    <div class="container py-4">
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {% if items.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ items.previous_page_number }}" aria-label="Previous">
+                        <span aria-hidden="true">«</span>
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for num in items.paginator.page_range %}
+                    {% if items.number == num %}
+                    <li class="page-item active">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% elif num > items.number|add:'-3' and num < items.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if items.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ items.next_page_number }}" aria-label="Next">
+                        <span aria-hidden="true">»</span>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<style>
+    .product-body .btn-sm {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.875rem;
+        border-radius: 8px;
+        transition: all 0.2s;
+    }
+    .product-body .btn-outline-primary {
+        border-color: #4e73df;
+        color: #4e73df;
+    }
+    .product-body .btn-outline-primary:hover {
+        background-color: #4e73df;
+        color: white;
+    }
+    .product-body .d-flex {
+        margin-top: 1rem;
+    }
+</style>
+<script type="text/javascript">
+$(document).on('click', '.btn-add-to-cart', function() {
+    var itemId = $(this).data('id').toString();
+    var name = $(this).data('name');
+    var price = parseFloat($(this).data('price'));
+    addItem(itemId, name, price, 1);
+    $('#cart').popover('show');
+});
+</script>
+{% endblock %}

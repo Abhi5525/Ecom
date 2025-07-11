@@ -1,0 +1,12 @@
+.card-text{
+    color : green;
+    font-weight: 600;
+}
+.card-title{
+    font-weight: 800;
+
+}
+.page-item{
+    padding-left: 25px;
+    margin: 15px;
+}
