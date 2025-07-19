@@ -7,11 +7,11 @@ function validateCart(cartData) {
     var validCart = {};
     for (var itemId in cartData) {
         var item = cartData[itemId];
-        if (Array.isArray(item) && 
-            item.length === 3 && 
-            typeof item[0] === 'number' && 
-            typeof item[1] === 'string' && 
-            typeof item[2] === 'number' && 
+        if (Array.isArray(item) &&
+            item.length === 3 &&
+            typeof item[0] === 'number' &&
+            typeof item[1] === 'string' &&
+            typeof item[2] === 'number' &&
             !isNaN(item[2])) {
             validCart[itemId] = item;
         }
@@ -61,6 +61,7 @@ function updateCartPopover() {
     } else {
         var cartIndex = 1;
         var total = 0;
+        console.log(cart);
         for (var itemId in cart) {
             var item = cart[itemId];
             if (!item || typeof item[2] !== 'number' || isNaN(item[2])) {
@@ -70,9 +71,13 @@ function updateCartPopover() {
             cartString += `
                 <div style="padding: 5px 0; border-bottom: 1px solid #eee;">
                     ${cartIndex}. ${item[1]} × ${item[0]} <span style="float: right;">Rs ${item[2].toFixed(2)}</span>
+                     <button style="background:red;color:white;border:none;padding:2px 5px;" class = "btn-decrease" data-id = "${itemId}">Remove</button>
+                     <button style="background:green;color:white;border:none;padding:2px 5px;" class = "btn-increase" data-id = "${itemId}">Add</button>
                 </div>`;
             total += item[2];
             cartIndex++;
+
+
         }
         cartString += `
             <div style="padding: 10px 0; border-top: 1px solid #eee; margin-top: 10px;">
@@ -85,13 +90,43 @@ function updateCartPopover() {
         html: true,
         placement: 'bottom',
         trigger: 'click'
-    });
+    })
 }
+$(document).on('click', '.btn-increase', function (e) {
+    e.stopPropagation();
+    const id = $(this).data('id');
+    if (cart[id]) {
+        const unitPrice = cart[id][2] / cart[id][0]; // calculate price per item
+        cart[id][0] += 1;
+        cart[id][2] += unitPrice;
+        saveCart();  // IMPORTANT: Save and refresh popover
+    }
+});
+
+$(document).on('click', '.btn-decrease', function (e) {
+    e.stopPropagation();
+    const id = $(this).data('id');
+    if (cart[id]) {
+        const unitPrice = cart[id][2] / cart[id][0];
+        if (cart[id][0] > 1) {
+            cart[id][0] -= 1;
+            cart[id][2] -= unitPrice;
+        } else {
+            delete cart[id];
+        }
+        saveCart();  // IMPORTANT: Save and refresh popover
+    }
+});
+
+
 
 // Function to show toast notification
 function showToast(message) {
     var toast = $(`
-        <div class="toast" role="alert" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
+<div class="toast" role="alert"
+     style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000;
+            background-color: #333; color: white; padding: 20px; border-radius: 8px;">
+
             <div class="toast-header bg-success text-white">
                 <strong class="mr-auto">Success</strong>
                 <button type="button" class="ml-2 mb-1 close text-white" data-dismiss="toast">×</button>
@@ -101,19 +136,19 @@ function showToast(message) {
     `);
     $('body').append(toast);
     toast.toast({ delay: 3000 }).toast('show');
-    toast.on('hidden.bs.toast', function() { $(this).remove(); });
+    toast.on('hidden.bs.toast', function () { $(this).remove(); });
 }
 
 // Initialize cart on page load
-$(document).ready(function() {
+$(document).ready(function () {
     updateCartCount();
     updateCartPopover();
 
     // Close popover when clicking outside
-    $('body').on('click', function(e) {
-        if ($(e.target).data('toggle') !== 'popover' && 
-            $(e.target).parents('[data-toggle="popover"]').length === 0 && 
-            $(e.target).parents('.popover.show').length === 0) { 
+    $('body').on('click', function (e) {
+        if ($(e.target).data('toggle') !== 'popover' &&
+            $(e.target).parents('[data-toggle="popover"]').length === 0 &&
+            $(e.target).parents('.popover.show').length === 0) {
             $('#cart').popover('hide');
         }
     });
