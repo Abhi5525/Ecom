@@ -313,7 +313,27 @@ def logout_view(request):
 
 def about(request):
     return render(request, 'shop/about.html')
-
 def contact(request):
+    if request.method == 'POST':
+        if not request.user.is_authenticated:
+            messages.error(request, 'You must be logged in to send a message.')
+            return redirect('login')
+        name = request.POST.get('name')
+        email = request.POST.get('email')
+        subject = request.POST.get('subject')
+        message = request.POST.get('message')
+        feedback_data = {
+            'name': name,
+            'email': email,
+            'subject': subject,
+            'message': message
+        }
+        # Optionally, you can append this to a list if you want to keep multiple feedbacks in memory (not persistent)
+        feedback_list = []
+        feedback_list.append(feedback_data)
+        
+        # Here you can handle the contact form submission, e.g., save to database or send an email
+        messages.success(request, 'Thank you for contacting us!')
+        print(f"Feedback received: {feedback_data}")
+        return redirect('contact')  # Redirect to the same page or another page after submission    
     return render(request, 'shop/contact.html')
-
