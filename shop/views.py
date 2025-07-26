@@ -1,9 +1,18 @@
+
+# from django.shortcuts import render, redirect
+from django.contrib.auth import login, logout, authenticate
+from django.views.generic import CreateView
+from django.urls import reverse_lazy
+from .forms import SignUpForm, LoginForm
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import products, Order
 from django.core.paginator import  Paginator
 import json, uuid, hmac, hashlib, base64
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from .models import Order, User
 
 # Create your views here.
 def index(request):
@@ -36,60 +45,133 @@ def generate_signature(data_dict):
     signature = base64.b64encode(hmac_sha256.digest()).decode('utf-8')
 
     return signature
-
-
+@login_required
 @csrf_exempt
 def checkout(request):
+    print("=" * 50)
+    print("CHECKOUT VIEW DEBUG")
+    print("=" * 50)
+    print(f"Request method: {request.method}")
+    print(f"User: {request.user}")
+    print(f"User ID: {request.user.id}")
+    print(f"Is authenticated: {request.user.is_authenticated}")
+    
     if request.method == 'POST':
-       try:
-          items_raw = request.POST.get('items')
-          items = json.loads(items_raw)
-          name = request.POST.get('inputName','')
-          email = request.POST.get('inputEmail','')    
-          address = request.POST.get('inputAddress','')
-          state = request.POST.get('inputState','')
-          total = float(request.POST.get('total'))
-          transaction_uuid = str(uuid.uuid4())
-          tax = 0.00
+        print("\n--- POST REQUEST DATA ---")
+        print(f"All POST data: {dict(request.POST)}")
+        
+        try:
+            # Debug each field
+            items_raw = request.POST.get('items')
+            print(f"Items raw: '{items_raw}'")
+            print(f"Items raw type: {type(items_raw)}")
+            print(f"Items raw length: {len(items_raw) if items_raw else 'None'}")
+            
+            if not items_raw:
+                print("ERROR: No items data received!")
+                return render(request,'shop/checkout.html', {'error': 'No cart data received'})
+            
+            items = json.loads(items_raw)
+            print(f"Items parsed: {items}")
+            print(f"Items type: {type(items)}")
+            print(f"Items keys: {list(items.keys()) if items else 'Empty'}")
+            
+            name = request.POST.get('inputName','')
+            email = request.POST.get('inputEmail','')    
+            address = request.POST.get('inputAddress','')
+            state = request.POST.get('inputState','')
+            total_raw = request.POST.get('total')
+            
+            print(f"Name: '{name}'")
+            print(f"Email: '{email}'")
+            print(f"Address: '{address}'")
+            print(f"State: '{state}'")
+            print(f"Total raw: '{total_raw}'")
+            
+            if not total_raw:
+                print("ERROR: No total received!")
+                return render(request,'shop/checkout.html', {'error': 'No total amount received'})
                 
-          amount = f"{total:.2f}"
-          tax_amount = f"{tax:.2f}"
-          total_amount = f"{total + tax:.2f}"
-          signed_field_names = "total_amount,transaction_uuid,product_code"
-
-
-
-          order = Order(items = items, name=name, email=email, address=address, state=state,  total=total+ tax, transaction_uuid = transaction_uuid,has_paid = False)
-          order.save()
-
-          data_to_sign = {
-              'total_amount': total_amount,
-              'transaction_uuid': transaction_uuid,
-              'product_code':'EPAYTEST',
-              'signed_field_names': signed_field_names
-          }
-          signature = generate_signature(data_to_sign)
-          return render(request, "shop/esewa.html", {
-            'amount': str(amount),
-            'failure_url': 'http://localhost:8000/payment/failure/',
-            "product_delivery_charge": "0",
-            "product_service_charge": "0",
-            'product_code': 'EPAYTEST',
-            'signature': signature,
-            'signed_field_names': signed_field_names,
-
-            'success_url': 'http://localhost:8000/payment/success/',
-
-            'tax_amount': str(tax_amount),
-            'total_amount': str(total_amount),
-            'transaction_uuid': transaction_uuid
-
-          })
-       except Exception as e:
-           return render(request,'shop/checkout.html', {'error': f'Order creation failed: {str(e)}'})
-        
-    return render(request, 'shop/checkout.html', {'error': 'Order creation failed'})
-        
+            total = float(total_raw)
+            print(f"Total parsed: {total}")
+            
+            transaction_uuid = str(uuid.uuid4())
+            print(f"Transaction UUID: {transaction_uuid}")
+            
+            tax = 0.00
+            amount = f"{total:.2f}"
+            tax_amount = f"{tax:.2f}"
+            total_amount = f"{total + tax:.2f}"
+            signed_field_names = "total_amount,transaction_uuid,product_code"
+            
+            print(f"Amount: {amount}")
+            print(f"Tax amount: {tax_amount}")
+            print(f"Total amount: {total_amount}")
+            
+            print("\n--- CREATING ORDER ---")
+            order = Order(
+                user = request.user,
+                items=items, 
+                name=name, 
+                email=email, 
+                address=address, 
+                state=state,  
+                total=total + tax, 
+                transaction_uuid=transaction_uuid,
+                has_paid=False
+            )
+            order.save()
+            print(f"Order created successfully with ID: {order.id}")
+            
+            print("\n--- GENERATING SIGNATURE ---")
+            data_to_sign = {
+                'total_amount': total_amount,
+                'transaction_uuid': transaction_uuid,
+                'product_code':'EPAYTEST',
+                'signed_field_names': signed_field_names
+            }
+            print(f"Data to sign: {data_to_sign}")
+            
+            signature = generate_signature(data_to_sign)
+            print(f"Generated signature: {signature}")
+            
+            print("\n--- RENDERING ESEWA TEMPLATE ---")
+            context = {
+                'amount': str(amount),
+                'failure_url': 'http://localhost:8000/payment/failure/',
+                "product_delivery_charge": "0",
+                "product_service_charge": "0",
+                'product_code': 'EPAYTEST',
+                'signature': signature,
+                'signed_field_names': signed_field_names,
+                'success_url': 'http://localhost:8000/payment/success/',
+                'tax_amount': str(tax_amount),
+                'total_amount': str(total_amount),
+                'transaction_uuid': transaction_uuid
+            }
+            print(f"Context for esewa template: {context}")
+            
+            return render(request, "shop/esewa.html", context)
+            
+        except json.JSONDecodeError as e:
+            print(f"JSON DECODE ERROR: {str(e)}")
+            print(f"Raw items data that failed: '{items_raw}'")
+            return render(request,'shop/checkout.html', {'error': f'Invalid cart data: {str(e)}'})
+            
+        except ValueError as e:
+            print(f"VALUE ERROR (probably total conversion): {str(e)}")
+            return render(request,'shop/checkout.html', {'error': f'Invalid total amount: {str(e)}'})
+            
+        except Exception as e:
+            print(f"UNEXPECTED ERROR: {str(e)}")
+            import traceback
+            print("Full traceback:")
+            traceback.print_exc()
+            return render(request,'shop/checkout.html', {'error': f'Order creation failed: {str(e)}'})
+    
+    print("\n--- GET REQUEST ---")
+    print("Rendering checkout template for GET request")
+    return render(request, 'shop/checkout.html')
 import requests
 import xmltodict
 import json
@@ -98,7 +180,9 @@ from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
 from .models import Order
+from django.contrib.auth import get_user_model
 # SIMPLIFIED VERSION (Much shorter):
+@login_required
 @csrf_exempt
 def payment_success(request):
     if request.method != 'GET':
@@ -164,3 +248,72 @@ def payment_failure(request):
         pass
 
     return render(request, 'shop/payment_failed.html', {'error': error_message})
+
+
+@login_required
+def view_orders(request):
+    orders = Order.objects.filter(user=request.user).order_by('-created_at')
+    return render(request, 'shop/orders.html', {'orders': orders})
+
+
+class SignUpView(CreateView):
+    model = User
+    form_class = SignUpForm
+    success_url = reverse_lazy('login')
+    template_name = 'shop/signup.html'
+
+    def form_valid(self, form):
+        # Save the user instance
+        user = form.save(commit=False)
+        user.is_active = True  # Ensure the user is active
+        user.save()
+        
+        # Log the user in automatically after signup
+        login(self.request, user)
+        
+        # Add success message
+        messages.success(
+            self.request,
+            f"Welcome, {user.email}! Your account has been created successfully."
+        )
+        
+        # Redirect to homepage or wherever appropriate
+        return redirect('index')  # or your preferred redirect destination
+
+    def form_invalid(self, form):
+        # Add error messages for invalid form submission
+        for field, errors in form.errors.items():
+            for error in errors:
+                messages.error(
+                    self.request,
+                    f"Error in {field}: {error}"
+                )
+        return super().form_invalid(form)
+
+from django.contrib import messages
+def login_view(request):
+    if request.method == 'POST':
+        email = request.POST['username']
+        password = request.POST['password']
+        
+        user = authenticate(request, username=email, password=password)
+        
+        if user is not None:
+            login(request, user)
+            return redirect('index')  # change to your redirect URL
+        else:
+            return render(request, 'shop/login.html', {'form': {'errors': True}})
+    
+    return render(request, 'shop/login.html')
+
+
+def logout_view(request):
+    logout(request)
+    return redirect('index')  # Change 'home' to your homepage URL name
+
+def about(request):
+    return render(request, 'shop/about.html')
+
+def contact(request):
+    return render(request, 'shop/contact.html')
+

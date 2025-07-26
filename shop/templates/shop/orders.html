@@ -1,0 +1,61 @@
+{% extends 'shop/base.html' %}
+
+{% block body %}
+<div class="container mt-4">
+    <h2 class="mb-4">Order History for {{ request.user.username }}</h2>
+
+    {% if orders %}
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Order Date</th>
+                    <th>Order ID</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td>{{ order.order_date }}</td>
+                    <td>{{ order.transaction_uuid }}</td>
+                    <td>Rs {{ order.total|floatformat:2 }}</td>
+                    <td>{% if order.has_paid %}Paid{% else %}Pending{% endif %}</td>
+                    <td>
+                        <button class="btn btn-info btn-sm" data-toggle="collapse"
+                            data-target="#orderDetails{{ forloop.counter }}">View Details</button>
+                        <div id="orderDetails{{ forloop.counter }}" class="collapse mt-2">
+                            <ul class="list-group">
+                                <li class="list-group-item"><strong>Name:</strong> {{ order.name }}</li>
+                                <li class="list-group-item"><strong>Email:</strong> {{ order.email }}</li>
+                                <li class="list-group-item"><strong>Address:</strong> {{ order.address }}</li>
+                                <li class="list-group-item"><strong>State:</strong> {{ order.state }}</li>
+                                <li class="list-group-item"><strong>Phone:</strong> {{ order.phone }}</li>
+                                <li class="list-group-item"><strong>Items:</strong>
+                                    <ul>
+                                        {% if order.items and order.items|length > 0 %}
+                                        {% for key, item in order.items.items %}
+                                        <li>{{ item.1 }}</li>
+                                        <li>Qty: {{ item.0 }}  - Total Rs {{ item.2|floatformat:2 }}</li>
+                                        {% endfor %}
+                                        {% else %}
+                                        <li>No items listed</li>
+                                        {% endif %}
+
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-muted">No orders found for this user.</p>
+    {% endif %}
+</div>
+{% endblock %}

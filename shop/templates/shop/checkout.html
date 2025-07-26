@@ -121,7 +121,12 @@
 <script>
 $(document).ready(function() {
     // Get cart from global variable (set by cart.js) or localStorage
-    const cart = window.cart || (localStorage.getItem('cart') ? JSON.parse(localStorage.getItem('cart')) : {});
+    const cartKey = (USER_ID && USER_ID !== 0) ? 'cart_' + USER_ID : 'cart_anonymous';
+    const cart = window.cart || (localStorage.getItem(cartKey) ? JSON.parse(localStorage.getItem(cartKey)) : {});
+
+     
+    console.log('Using cart key:', cartKey);
+    console.log('Cart data:', cart);
     let total = 0;
 
     // Clear existing items

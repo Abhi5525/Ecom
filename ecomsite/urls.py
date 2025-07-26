@@ -17,6 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from shop import views
+from shop.views import SignUpView, login_view, logout_view
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.index, name = 'index'),
@@ -24,6 +25,13 @@ urlpatterns = [
     path('checkout/', views.checkout, name = 'checkout'),
      path('payment/success/', views.payment_success, name='payment_success'),
      path('payment/failure/', views.payment_failure, name='payment_failure'),
+
+    path('view_orders/', views.view_orders, name='view_orders'),
+     path('signup/', SignUpView.as_view(), name='signup'),
+    path('login/', login_view, name='login'),
+    path('logout/', logout_view, name='logout'),
+    path('about/', views.about, name='about'),
+    path('contact/', views.contact, name='contact'),
 
      
 ]

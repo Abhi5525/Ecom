@@ -33,7 +33,7 @@
                     
                     <div class="transaction-info bg-light p-3 rounded mb-4">
                         <p class="mb-1"><strong>Transaction ID:</strong> {{ order.transaction_uuid }}</p>
-                        <p class="mb-0"><strong>Order Date:</strong> {{ order.created_at|date:"F j, Y" }}</p>
+                        <p class="mb-0"><strong>Order Date:</strong> {{ order.order_date|date:"F j, Y" }}</p>
                     </div>
                     
                     <p class="text-muted mb-4">Your items will be delivered soon!</p>
@@ -42,7 +42,7 @@
                         <a href="/" class="btn btn-primary px-4 mr-3">
                             <i class="fas fa-home mr-2"></i> Back to Home
                         </a>
-                        <a href="/orders" class="btn btn-outline-primary px-4">
+                        <a href="/view_orders" class="btn btn-outline-primary px-4">
                             <i class="fas fa-clipboard-list mr-2"></i> View Orders
                         </a>
                     </div>

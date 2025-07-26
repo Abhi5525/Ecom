@@ -1,6 +1,5 @@
 // Cart functionality
 // Initialize cart from localStorage or create empty cart
-var cart = localStorage.getItem('cart') ? validateCart(JSON.parse(localStorage.getItem('cart'))) : {};
 
 // Function to validate and clean cart data
 function validateCart(cartData) {
@@ -19,10 +18,17 @@ function validateCart(cartData) {
     return validCart;
 }
 
+// Get cart key based on user ID
+function getCartKey() {
+    return USER_ID && USER_ID !== 0 ? 'cart_' + USER_ID : 'cart_anonymous';
+}
+var cart = localStorage.getItem(getCartKey()) ? validateCart(JSON.parse(localStorage.getItem(getCartKey()))) : {};
+
+
 // Function to save cart to localStorage and update UI
 function saveCart() {
-    localStorage.setItem('cart', JSON.stringify(cart));
-    updateCartCount();
+    localStorage.setItem(getCartKey(), JSON.stringify(cart));
+    // updateCartCount();
     updateCartPopover();
 }
 
@@ -53,7 +59,6 @@ function updateCartCount() {
     $('.cart-count').text(count);
 }
 
-// Function to update cart popover content
 function updateCartPopover() {
     var cartString = '<h5>Your Cart</h5>';
     if (Object.keys(cart).length === 0) {
@@ -61,7 +66,6 @@ function updateCartPopover() {
     } else {
         var cartIndex = 1;
         var total = 0;
-        console.log(cart);
         for (var itemId in cart) {
             var item = cart[itemId];
             if (!item || typeof item[2] !== 'number' || isNaN(item[2])) {
@@ -69,28 +73,39 @@ function updateCartPopover() {
                 continue;
             }
             cartString += `
-                <div style="padding: 5px 0; border-bottom: 1px solid #eee;">
-                    ${cartIndex}. ${item[1]} × ${item[0]} <span style="float: right;">Rs ${item[2].toFixed(2)}</span>
-                     <button style="background:red;color:white;border:none;padding:2px 5px;" class = "btn-decrease" data-id = "${itemId}">Remove</button>
-                     <button style="background:green;color:white;border:none;padding:2px 5px;" class = "btn-increase" data-id = "${itemId}">Add</button>
+                <div class="cart-item" >
+                    <span class="item-details">${cartIndex}. ${item[1]} × ${item[0]}</span>
+                    <span class="item-price" >Rs ${item[2].toFixed(2)}</span>
+                    <div class="item-actions">
+                        <button class="btn-decrease" data-id="${itemId}" >-</button>
+                        <button class="btn-increase" data-id="${itemId}" >+</button>
+                    </div>
                 </div>`;
             total += item[2];
             cartIndex++;
-
-
         }
         cartString += `
-            <div style="padding: 10px 0; border-top: 1px solid #eee; margin-top: 10px;">
+            <div class="cart-total mt-2 pt-2 border-top">
                 <strong>Total: Rs ${total.toFixed(2)}</strong>
             </div>`;
     }
     cartString += '<a href="/checkout" class="btn btn-success btn-block mt-2">Checkout</a>';
-    $('#cart').attr('data-content', cartString);
-    $('#cart').popover('dispose').popover({
+
+    $('#cart').popover('dispose');
+    $('#cart').popover({
         html: true,
         placement: 'bottom',
-        trigger: 'click'
-    })
+        trigger: 'click',
+        content: cartString, 
+        sanitize: false // Allow HTML content
+    });
+
+    // Update cart count
+    var count = 0;
+    for (var itemId in cart) {
+        count += cart[itemId][0];
+    }
+    $('.cart-count').text(count);
 }
 $(document).on('click', '.btn-increase', function (e) {
     e.stopPropagation();

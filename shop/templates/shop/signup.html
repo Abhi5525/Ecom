@@ -1,0 +1,135 @@
+{% extends 'shop/base.html' %}
+
+{% block title %}Sign Up{% endblock %}
+
+{% block body %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white text-center py-3">
+                    <h3 class="mb-0">Create Your Account</h3>
+                    <p class="mb-0">Join our e-commerce community today</p>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post">
+                        {% csrf_token %}
+                        {% if form.errors %}
+                            <div class="alert alert-danger">
+                                {% for field in form %}
+                                    {% for error in field.errors %}
+                                        <p class="mb-1">{{ error }}</p>
+                                    {% endfor %}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <!-- Username Field -->
+                        <div class="form-group mb-3">
+                            {{ form.username.label_tag }}
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text bg-white">
+                                        <i class="fas fa-user text-primary"></i>
+                                    </span>
+                                </div>
+                                {{ form.username }}
+                            </div>
+                        </div>
+
+                        <!-- Email Field -->
+                        <div class="form-group mb-3">
+                            {{ form.email.label_tag }}
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text bg-white">
+                                        <i class="fas fa-envelope text-primary"></i>
+                                    </span>
+                                </div>
+                                {{ form.email }}
+                            </div>
+                        </div>
+
+                        <!-- Password1 Field -->
+                        <div class="form-group mb-3">
+                            {{ form.password1.label_tag }}
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text bg-white">
+                                        <i class="fas fa-lock text-primary"></i>
+                                    </span>
+                                </div>
+                                {{ form.password1 }}
+                            </div>
+                            <small class="form-text text-muted">At least 8 characters</small>
+                        </div>
+
+                        <!-- Password2 Field -->
+                        <div class="form-group mb-4">
+                            {{ form.password2.label_tag }}
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text bg-white">
+                                        <i class="fas fa-lock text-primary"></i>
+                                    </span>
+                                </div>
+                                {{ form.password2 }}
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit" class="btn btn-primary btn-block py-2 mb-3">
+                            <i class="fas fa-user-plus mr-2"></i>Sign Up
+                        </button>
+                    </form>
+                </div>
+                <div class="card-footer text-center bg-light">
+                    <p class="mb-0">Already have an account? 
+                        <a href="{% url 'login' %}" class="text-primary font-weight-bold">Login here</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border-radius: 10px;
+        overflow: hidden;
+        border: none;
+    }
+
+    .form-control {
+        height: 45px;
+        border-left: none;
+        border-radius: 0 5px 5px 0 !important;
+    }
+
+    .form-control:focus {
+        box-shadow: none;
+        border-color: #ced4da;
+    }
+
+    .input-group-text {
+        border-right: none;
+        border-radius: 5px 0 0 5px !important;
+    }
+
+    .btn-primary {
+        background-color: #4e73df;
+        border: none;
+        border-radius: 5px;
+        font-weight: 600;
+    }
+
+    .btn-primary:hover {
+        background-color: #2e59d9;
+    }
+
+    label {
+        font-weight: 500;
+        margin-bottom: 0.3rem;
+    }
+</style>
+{% endblock %}

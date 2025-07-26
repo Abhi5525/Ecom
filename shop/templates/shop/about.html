@@ -1,0 +1,140 @@
+{% extends 'shop/base.html' %}
+{% load static %}
+
+{% block title %}About Us - ShopEase{% endblock %}
+
+{% block body %}
+<div class="about-page">
+    <!-- Hero Section -->
+    <section class="hero-section bg-light py-5">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <h1 class="display-4 mb-4">Our Story</h1>
+                    <p class="lead">ShopEase was founded in 2023 with a simple mission: to make online shopping effortless and enjoyable.</p>
+                </div>
+                <div class="col-lg-6">
+                    <img src="https://images.unsplash.com/photo-1661956602116-aa6865609028?q=80&w=600&h=400&fit=crop" alt="Our Team" class="img-fluid rounded shadow" onerror="this.src='https://via.placeholder.com/600x400'; console.log('Hero image failed to load');">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Mission Section -->
+    <section class="mission-section py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 text-center mb-5">
+                    <h2 class="section-title">Our Mission</h2>
+                    <div class="divider mx-auto"></div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <i class="fas fa-gem fa-3x text-primary mb-3"></i>
+                            <h5 class="card-title">Quality Products</h5>
+                            <p class="card-text">We source only the highest quality products from trusted suppliers.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <i class="fas fa-tag fa-3x text-primary mb-3"></i>
+                            <h5 class="card-title">Competitive Prices</h5>
+                            <p class="card-text">We work directly with manufacturers to bring you the best prices.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <i class="fas fa-headset fa-3x text-primary mb-3"></i>
+                            <h5 class="card-title">Exceptional Service</h5>
+                            <p class="card-text">Our customer support team is available 24/7 to assist you.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Team Section -->
+    <section class="team-section bg-light py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 text-center mb-5">
+                    <h2 class="section-title">Meet Our Team</h2>
+                    <div class="divider mx-auto"></div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3 col-sm-6 mb-4">
+                    <div class="team-card text-center">
+                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=250&h=250&fit=crop&crop=faces" class="img-fluid rounded-circle mb-3" alt="John Doe" onerror="this.src='https://via.placeholder.com/250x250'; console.log('John Doe image failed to load');">
+                        <h5>Jayaram</h5>
+                        <p class="text-muted">Founder & CEO</p>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6 mb-4">
+                    <div class="team-card text-center">
+                        <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=250&h=250&fit=crop&crop=faces" class="img-fluid rounded-circle mb-3" alt="Jane Smith" onerror="this.src='https://via.placeholder.com/250x250'; console.log('Jane Smith image failed to load');">
+                        <h5>Jaya</h5>
+                        <p class="text-muted">Marketing Director</p>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6 mb-4">
+                    <div class="team-card text-center">
+                        <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=250&h=250&fit=crop&crop=faces" class="img-fluid rounded-circle mb-3" alt="Mike Johnson" onerror="this.src='https://via.placeholder.com/250x250'; console.log('Mike Johnson image failed to load');">
+                        <h5>Mukesh</h5>
+                        <p class="text-muted">Product Manager</p>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6 mb-4">
+                    <div class="team-card text-center">
+                        <img src="https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?q=80&w=250&h=250&fit=crop&crop=faces" class="img-fluid rounded-circle mb-3" alt="Sarah Williams" onerror="this.src='https://via.placeholder.com/250x250'; console.log('Sarah Williams image failed to load');">
+                        <h5>Sarala</h5>
+                        <p class="text-muted">Customer Support</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<style>
+    .hero-section {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        margin-bottom: 30px;
+    }
+    
+    .section-title {
+        position: relative;
+        display: inline-block;
+        font-weight: 600;
+    }
+    
+    .divider {
+        width: 50px;
+        height: 3px;
+        background-color: #4e73df;
+        margin-top: 15px;
+    }
+    
+    .team-card img {
+        border: 5px solid #fff;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .mission-section .card {
+        transition: transform 0.3s;
+    }
+    
+    .mission-section .card:hover {
+        transform: translateY(-10px);
+    }
+</style>
+{% endblock %}
